@@ -1,5 +1,5 @@
-import { Reflection } from 'reflection';
-import { Device, DeviceExtension, IDeviceConfig, Property, PropertyChangeEventArgs } from 'smart-hut';
+import { Reflection } from '@kezziny/reflection';
+import { Device, DeviceExtension, IDeviceConfig, Property, PropertyChangeEventArgs } from '@kezziny/smart-hut';
 import { MqttExtension } from './Extension';
 
 export interface IMqttDeviceConfig extends IDeviceConfig {

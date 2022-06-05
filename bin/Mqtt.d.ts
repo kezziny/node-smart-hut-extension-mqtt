@@ -1,4 +1,4 @@
-import { Device, DeviceExtension, IDeviceConfig, PropertyChangeEventArgs } from 'smart-hut';
+import { Device, DeviceExtension, IDeviceConfig, PropertyChangeEventArgs } from '@kezziny/smart-hut';
 export interface IMqttDeviceConfig extends IDeviceConfig {
     Topic: {
         [key: string]: string;
@@ -17,7 +17,7 @@ export declare class Mqtt extends DeviceExtension {
             Extensions: DeviceExtension[];
             Configuration: IDeviceConfig;
             Configure(config: IDeviceConfig): void;
-            GetMethodsWithMetadata(key: string): import("reflection").IMethodInfo[];
+            GetMethodsWithMetadata(key: string): import("@kezziny/reflection").IMethodInfo[];
             ExecuteCallback(callback: any, ...args: any[]): void;
             GetProperties(): string[];
             GetMethods(): string[];
@@ -25,7 +25,7 @@ export declare class Mqtt extends DeviceExtension {
             GetClassMetadata(key: string): any;
             HasPropertyMetadata(property: string, key: string): any;
             GetPropertyMetadata(property: string, key: string): any;
-            GetPropertiesWithMetadata(key: string): import("reflection").IMethodInfo[];
+            GetPropertiesWithMetadata(key: string): import("@kezziny/reflection").IMethodInfo[];
             CallMethodsWithMetadata(key: string, ...args: any[]): void;
         };
     } & T;

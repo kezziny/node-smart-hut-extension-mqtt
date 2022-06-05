@@ -7,8 +7,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Mqtt = void 0;
-const reflection_1 = require("reflection");
-const smart_hut_1 = require("smart-hut");
+const reflection_1 = require("@kezziny/reflection");
+const smart_hut_1 = require("@kezziny/smart-hut");
 const Extension_1 = require("./Extension");
 class Mqtt extends smart_hut_1.DeviceExtension {
     Configure(config) {

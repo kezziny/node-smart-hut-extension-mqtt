@@ -1,6 +1,6 @@
 {
-  "name": "smart-hut-extension-mqtt",
-  "version": "1.0.0",
+  "name": "@kezziny/smart-hut-extension-mqtt",
+  "version": "1.0.1",
   "description": "SmartHut project extension",
   "main": "bin/index.js",
   "types": "bin/index.d.ts",
@@ -21,10 +21,10 @@
   },
   "homepage": "https://github.com/kezziny/node-smart-hut-extension-mqtt#readme",
   "dependencies": {
+    "@kezziny/reflection": "^1.0.0",
+    "@kezziny/smart-hut": "^1.0.1",
     "mqtt": "^4.3.7",
-    "reflection": "file:../node-reflection",
     "rxjs": "^7.5.5",
-    "smart-hut": "file:../node-smart-hut",
     "typescript": "^4.7.2"
   }
 }
