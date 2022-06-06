@@ -1,5 +1,5 @@
 import { Reflection } from '@kezziny/reflection';
-import { Device, DeviceExtension, IDeviceConfig, Property, PropertyChangeEventArgs } from '@kezziny/smart-hut';
+import { DataBindingConverter, DataPublishingConverter, Device, DeviceExtension, IDeviceConfig, Property, PropertyChangeEventArgs } from '@kezziny/smart-hut';
 import { MqttExtension } from './Extension';
 
 export interface IMqttDeviceConfig extends IDeviceConfig {
@@ -33,7 +33,7 @@ export class Mqtt extends DeviceExtension {
 					.filter(binding => packet.payload.hasOwnProperty(binding.Metadata.Key))
 					.forEach(binding => {
 						let value = packet.payload[binding.Metadata.Key];
-						if (binding.Metadata.Converter) value = binding.Metadata.Converter(topicName, value);
+						if (binding.Metadata.Converter) value = this.Device.ExecuteBindingCallback(binding.Metadata.Converter, { Topic: topicName, Payload: value});
 						console.log("Try override", binding.Name, "with", value, "from source", topic);
 						this.Device[binding.Name].Value = { value: value };
 					});
@@ -46,7 +46,7 @@ export class Mqtt extends DeviceExtension {
 				console.log("Subscribe to control topic:", `${MqttExtension.Configuration.TargetRootTopic}/${this.Device.Configuration.Room}/${this.Device.Configuration.Name}/${property.Name}/set`);
 				MqttExtension.Subscribe(`${MqttExtension.Configuration.TargetRootTopic}/${this.Configuration.Room}/${this.Configuration.Name}/${property.Name}/set`)
 					.subscribe(packet =>{
-						this.Device.ExecuteCallback(property.Metadata, packet.payload);
+						this.Device.ExecuteBindingCallback(property.Metadata, {Payload: packet.payload});
 					});
 			});
 
@@ -72,7 +72,7 @@ export class Mqtt extends DeviceExtension {
 		};
 	}
 
-	public static Bind(args: { Key: string, Topic?: string, Converter?: (topic: string, data: any) => any | string}) {
+	public static Bind(args: { Key: string, Topic?: string, Converter?: DataBindingConverter<{Topic: string, Payload: any}>}) {
 		return function (device: Device, property: string) {
 			Reflection.SetPropertyMetadata(device, property, Mqtt.BindKey, args);
 		}
@@ -81,7 +81,14 @@ export class Mqtt extends DeviceExtension {
 		Reflection.SetPropertyMetadata(device, property, Mqtt.PublishKey, null);
 	}
 
-	public static Control(callback: (device: Device, data: any) => void | string) {
+	public static BindAndPublish(args: { Key: string, Topic?: string, Converter?: DataBindingConverter<{Topic: string, Payload: any}>}) {
+		return function (device: Device, property: string) {
+			Reflection.SetPropertyMetadata(device, property, Mqtt.BindKey, args);
+			Reflection.SetPropertyMetadata(device, property, Mqtt.PublishKey, null);
+		}
+	}
+
+	public static Control(callback: DataBindingConverter<{Payload: any}>) {
 		return function (device: Device, property: string) {
 			Reflection.SetPropertyMetadata(device, property, Mqtt.ControlKey, callback);
 		}

@@ -17,7 +17,7 @@ export class MqttExtension
 {
     public static Configuration: IMqttConfig;
 
-    public static Setup(config: any): Promise<MqttExtension> {
+    public static Setup(config: IMqttConfig): Promise<MqttExtension> {
         console.log("Setup mqtt extension");
         
         MqttExtension.Configuration = config;

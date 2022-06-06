@@ -6,60 +6,79 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MqttDeviceExtension = void 0;
+exports.Mqtt = void 0;
+const reflection_1 = require("@kezziny/reflection");
+const smart_hut_1 = require("@kezziny/smart-hut");
 const Extension_1 = require("./Extension");
-const smart_hut_1 = require("smart-hut");
-class MqttDeviceExtension extends smart_hut_1.DeviceExtension {
+class Mqtt extends smart_hut_1.DeviceExtension {
     Configure(config) {
         super.Configure(config);
         console.log("Configure device extension: mqtt");
         if (typeof config.Topic === "string") {
             this.Configuration.Topic = { "default": config.Topic };
         }
-        let bindings = this.Device.GetAllPropertyWithKey("MqttBind")
-            .map(property => {
-            return { name: property, metadata: this.Device.GetMetadata(property, "MqttBind") };
-        });
         // Subscribe to source topics
-        let sourceBindings = bindings.filter(binding => binding.metadata.hasOwnProperty("Source"));
+        let sourceBindings = this.Device.GetPropertiesWithMetadata(Mqtt.BindKey);
         Object.getOwnPropertyNames(this.Configuration.Topic).forEach(topicName => {
             let topic = this.Configuration.Topic[topicName];
             if (topic[0] === '.')
                 topic = Extension_1.MqttExtension.Configuration.SourceRootTopic + topic.substring(1);
             console.log("Subscribe to source topic:", topic);
             Extension_1.MqttExtension.Subscribe(topic).subscribe(packet => {
-                sourceBindings.filter(binding => (binding.metadata.Source.Topic || 'default') === topicName)
-                    .filter(binding => packet.payload.hasOwnProperty(binding.metadata.Source.Key))
+                sourceBindings.filter(binding => (binding.Metadata.Topic || 'default') === topicName)
+                    .filter(binding => packet.payload.hasOwnProperty(binding.Metadata.Key))
                     .forEach(binding => {
-                    let value = packet.payload[binding.metadata.Source.Key];
-                    if (binding.metadata.Source.Converter)
-                        value = binding.metadata.Source.Converter(topicName, value);
-                    console.log("Try override", binding.name, "with", value, "from source", topic);
-                    if (value !== null)
-                        this.Device[binding.name] = { value: value };
+                    let value = packet.payload[binding.Metadata.Key];
+                    if (binding.Metadata.Converter)
+                        value = binding.Metadata.Converter(topicName, value);
+                    console.log("Try override", binding.Name, "with", value, "from source", topic);
+                    this.Device[binding.Name].Value = { value: value };
                 });
             });
         });
         // Subscribe to control topics
-        bindings.filter(binding => binding.metadata.hasOwnProperty("Control"))
-            .forEach(binding => {
-            console.log("Subscribe to control topic:", `${Extension_1.MqttExtension.Configuration.TargetRootTopic}/${this.Device.Configuration.Room}/${this.Device.Configuration.Name}/set`);
-            Extension_1.MqttExtension.Subscribe(`${Extension_1.MqttExtension.Configuration.TargetRootTopic}/${this.Configuration.Room}/${this.Configuration.Name}/${binding.name}/set`)
+        this.Device.GetPropertiesWithMetadata(Mqtt.ControlKey)
+            .forEach(property => {
+            console.log("Subscribe to control topic:", `${Extension_1.MqttExtension.Configuration.TargetRootTopic}/${this.Device.Configuration.Room}/${this.Device.Configuration.Name}/${property.Name}/set`);
+            Extension_1.MqttExtension.Subscribe(`${Extension_1.MqttExtension.Configuration.TargetRootTopic}/${this.Configuration.Room}/${this.Configuration.Name}/${property.Name}/set`)
                 .subscribe(packet => {
-                binding.metadata.Control.Callback(this, packet.payload);
+                this.Device.ExecuteCallback(property.Metadata, packet.payload);
             });
         });
     }
     OnPropertyChanged(eventArgs) {
-        var _a;
-        if (this.Device.HasMetadata(eventArgs.Property, "MqttBind")
-            && ((_a = this.Device.GetMetadata(eventArgs.Property, "MqttBind")) === null || _a === void 0 ? void 0 : _a.hasOwnProperty("Publish"))) {
+        console.log("Has mqtt publish key?", eventArgs.Property);
+        if (this.Device.HasPropertyMetadata(eventArgs.Property, Mqtt.PublishKey)) {
             console.log("Publish changed data of", eventArgs.Property, "with value", eventArgs.To);
             Extension_1.MqttExtension.Publish(`${Extension_1.MqttExtension.Configuration.TargetRootTopic}/${this.Configuration.Room}/${this.Configuration.Name}/${eventArgs.Property}`, eventArgs.To);
         }
     }
+    static Extension(constructor) {
+        return class extends constructor {
+            constructor(...args) {
+                super(args);
+                this.Extensions.push(new Mqtt(this));
+            }
+        };
+    }
+    static Bind(args) {
+        return function (device, property) {
+            reflection_1.Reflection.SetPropertyMetadata(device, property, Mqtt.BindKey, args);
+        };
+    }
+    static Publish(device, property) {
+        reflection_1.Reflection.SetPropertyMetadata(device, property, Mqtt.PublishKey, null);
+    }
+    static Control(callback) {
+        return function (device, property) {
+            reflection_1.Reflection.SetPropertyMetadata(device, property, Mqtt.ControlKey, callback);
+        };
+    }
 }
+Mqtt.BindKey = "Bind";
+Mqtt.PublishKey = "Publish";
+Mqtt.ControlKey = "Control";
 __decorate([
-    (0, smart_hut_1.OnPropertyChanged)('Any')
-], MqttDeviceExtension.prototype, "OnPropertyChanged", null);
-exports.MqttDeviceExtension = MqttDeviceExtension;
+    smart_hut_1.Property.OnChanged('Any')
+], Mqtt.prototype, "OnPropertyChanged", null);
+exports.Mqtt = Mqtt;

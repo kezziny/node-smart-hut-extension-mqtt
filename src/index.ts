@@ -1,2 +1,2 @@
 export { MqttExtension } from "./Extension";
-export { Mqtt } from './Mqtt';
+export { Mqtt } from './DeviceExtension';

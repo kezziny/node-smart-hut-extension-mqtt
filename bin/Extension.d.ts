@@ -10,7 +10,7 @@ export interface IMqttConfig {
 }
 export declare class MqttExtension {
     static Configuration: IMqttConfig;
-    static Setup(config: any): Promise<MqttExtension>;
+    static Setup(config: IMqttConfig): Promise<MqttExtension>;
     private static Client;
     private static Subscriptions;
     private static Connect;
